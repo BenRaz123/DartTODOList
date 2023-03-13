@@ -29,7 +29,7 @@ void main() {
     File('data.txt');
   }
 
-  const listQuestions = [
+  List listQuestions = [
     [
       {
         'question': 'Would You like to Read or Write to the TODO List?',
@@ -65,19 +65,23 @@ void main() {
       List<String> todoItemList = readFromDataLog();
 
       if (todoItemList.length > 0) {
-
+        List<String> optionsList = todoItemList;
+        optionsList.add('*Exit*');
         List questions = [
           [
             {
               'question': 'What item would you like to remove?',
-              'options': todoItemList
+              'options': optionsList
             },
             'deleteSelection'
           ]
         ];
         var answers = new CLI_Dialog(listQuestions: questions).ask();
-        int indexOfDeletedItem = todoItemList.indexOf(answers['deleteSelection']);
-        removeLineFromDataLog(indexOfDeletedItem);
+        print(answers['deleteSection']);
+        if (answers['deleteSelection'] != '*Exit*') {
+          int indexOfDeletedItem = todoItemList.indexOf(answers['deleteSelection']);
+          removeLineFromDataLog(indexOfDeletedItem);
+        }
       } else {
         print("There are no items, silly!".bold);
         sleep(Duration(seconds: 1));

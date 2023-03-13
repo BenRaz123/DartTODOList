@@ -1,26 +1,87 @@
 import 'dart:io';
-//  import 'dart:convert';
-//  import 'package:intl/intl.dart';
+import 'package:cli_dialog/cli_dialog.dart';
+import 'package:ansi_styles/extension.dart';
+
+String clearTerminalCode = "\x1B[2J\x1B[0;0H";
 
 void writeToDataLog(var input, [String? alternatePath]) {
   var file = new File(alternatePath ?? 'data.txt');
   file.writeAsStringSync('$input\n', mode: FileMode.append);
 }
 
-void readFromDataLog([String? alternatePath]) {
+List<String> readFromDataLog([String? alternatePath]) {
   var file = new File(alternatePath ?? 'data.txt');
-  print(file.readAsLinesSync());
+  return file.readAsLinesSync();
 }
 
+//[
+void removeLineFromDataLog(int index, [String? alternatePath]) {
+  File file = new File(alternatePath ?? 'data.txt');
+  List<String> lines = file.readAsLinesSync();
+  lines.removeAt(index);
+  final newTextData = lines.join('\n');
+  file.writeAsStringSync(newTextData);
+}
+
+//]
 void main() {
-  
-  if (File('data.txt').exists()!=true) {
+  if (File('data.txt').exists() != true) {
     File('data.txt');
   }
 
-  print("What is your name?");
-  String? name = stdin.readLineSync();
-  print("Hello, ${name?.split(' ')[0]}!\nYour Name has been recorded!");
-  writeToDataLog("$name");
-  readFromDataLog();
+  const listQuestions = [
+    [
+      {
+        'question': 'Would You like to Read or Write to the TODO List?',
+        'options': ['Read', 'Write', 'Remove Items', 'Exit']
+      },
+      'userAction'
+    ]
+  ];
+
+  final dialog = CLI_Dialog(listQuestions: listQuestions);
+  while (true) {
+    print(clearTerminalCode);
+    final answer = dialog.ask();
+
+    final String userAction = answer['userAction'];
+
+    if (userAction.toLowerCase() == 'exit') {
+      exit(0);
+    } else if (userAction.toLowerCase() == 'read') {
+      print(clearTerminalCode);
+      List<String> dataLogLines = readFromDataLog();
+      dataLogLines.forEach((String line) => print("  $line"));
+      sleep(Duration(seconds: 1));
+    } else if (userAction.toLowerCase() == 'write') {
+      print(clearTerminalCode);
+      String? todoItem = CLI_Dialog(questions: [
+        ['What is the TODO Item?', 'todoItem']
+      ]).ask()['todoItem'];
+
+      writeToDataLog(todoItem);
+    } else if (userAction.toLowerCase() == 'remove items') {
+      print(clearTerminalCode);
+      List<String> todoItemList = readFromDataLog();
+
+      if (todoItemList.length > 0) {
+
+        List questions = [
+          [
+            {
+              'question': 'What item would you like to remove?',
+              'options': todoItemList
+            },
+            'deleteSelection'
+          ]
+        ];
+        var answers = new CLI_Dialog(listQuestions: questions).ask();
+        int indexOfDeletedItem = todoItemList.indexOf(answers['deleteSelection']);
+        removeLineFromDataLog(indexOfDeletedItem);
+      } else {
+        print("There are no items, silly!".bold);
+        sleep(Duration(seconds: 1));
+      }
+    }
+  }
 }
